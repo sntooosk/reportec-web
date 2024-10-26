@@ -140,24 +140,42 @@
               ? "status-analise"
               : "status-resolvido";
 
+          const isAnonymous = !report.victimName || !report.sala; // Checa se é anônimo
+
           reportCard.innerHTML = `
           <div class="card-content">
             <div class="card-body">
-              <p><strong>Nome da Vítima:</strong> ${report.victimName} ${report.victimLastName}</p>
-              <p><strong>Sala:</strong> ${report.sala}</p>
+              <p><strong>Nome da Vítima:</strong> ${
+                isAnonymous ? "Anônimo" : report.victimName
+              }</p>
+              <p><strong>Sala:</strong> ${
+                isAnonymous ? "Anônimo" : report.sala
+              }</p>
               <p><strong>Descrição:</strong> ${report.description}</p>
               <p><strong>Tipo:</strong> ${report.bullyingType}</p>
-              <p><strong>Status:</strong> <span class="${statusClass}">${report.status}</span></p>
+              <p><strong>Status:</strong> <span class="${statusClass}">${
+            report.status
+          }</span></p>
               <p><strong>Data:</strong> ${formattedDate}</p>
-              <select class="form-select mb-3" onchange="updateStatus('${doc.id}', this.value)">
+              <select class="form-select mb-3" onchange="updateStatus('${
+                doc.id
+              }', this.value)">
                 <option value="" disabled selected>Alterar Status</option>
                 <option value="Pendente">Pendente</option>
                 <option value="Em Análise">Em Análise</option>
                 <option value="Resolvido">Resolvido</option>
               </select>
-              <textarea id="response-${doc.id}" class="form-control mb-3" placeholder="Escreva uma resposta..."></textarea>
-              <button class="btn btn-primary" onclick="submitResponse('${doc.id}')">Enviar Resposta</button>
-              <button class="btn btn-delete mt-2" onclick="deleteReport('${doc.id}')">Excluir Denúncia</button>
+              <textarea id="response-${
+                doc.id
+              }" class="form-control mb-3" placeholder="Escreva uma resposta..." ${
+            isAnonymous ? "disabled" : ""
+          }></textarea>
+              <button class="btn btn-primary" onclick="submitResponse('${
+                doc.id
+              }')" ${isAnonymous ? "disabled" : ""}>Enviar Resposta</button>
+              <button class="btn btn-delete mt-2" onclick="deleteReport('${
+                doc.id
+              }')">Excluir Denúncia</button>
             </div>
           </div>
         `;
@@ -166,7 +184,9 @@
       }
 
       function submitResponse(reportId) {
-        const responseText = document.getElementById(`response-${reportId}`).value;
+        const responseText = document.getElementById(
+          `response-${reportId}`
+        ).value;
         if (responseText.trim() === "") {
           alert("A resposta não pode estar vazia.");
           return;
@@ -228,7 +248,8 @@
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          if (statusCounts[data.status] !== undefined) statusCounts[data.status]++;
+          if (statusCounts[data.status] !== undefined)
+            statusCounts[data.status]++;
           if (salaCounts[data.sala] !== undefined) salaCounts[data.sala]++;
         });
 
