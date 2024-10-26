@@ -143,7 +143,8 @@
           reportCard.innerHTML = `
                     <div class="card-content">
                         <div class="card-body">
-                            <p><strong>Nome da Vítima:</strong> ${report.victimName}</p>
+                            <p><strong>Nome da Vítima:</strong> ${report.victimName} ${report.victimLastName}</p>
+                            <p><strong>Sala:</strong> ${report.sala}</p>
                             <p><strong>Descrição:</strong> ${report.description}</p>
                             <p><strong>Tipo:</strong> ${report.bullyingType}</p>
                             <p><strong>Status:</strong> <span class="${statusClass}">${report.status}</span></p>
