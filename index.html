@@ -85,37 +85,6 @@
   <body>
     <div class="container">
       <h1>Painel do Administrador - Denúncias de Bullying</h1>
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <label for="salaFilter" class="form-label">Filtrar por Sala:</label>
-          <select id="salaFilter" class="form-select">
-            <option value="">Todas as Salas</option>
-            <option value="1 DSB">1 DSB</option>
-            <option value="2 DSB">2 DSB</option>
-            <option value="3 DSB">3 DSB</option>
-            <option value="1 MKT">1 MKT</option>
-            <option value="2 MKT">2 MKT</option>
-            <option value="3 MKT">3 MKT</option>
-            <option value="1 ADM">1 ADM</option>
-            <option value="2 ADM">2 ADM</option>
-            <option value="3 ADM">3 ADM</option>
-          </select>
-        </div>
-        <div class="col-md-6">
-          <label for="statusFilter" class="form-label"
-            >Filtrar por Status:</label
-          >
-          <select id="statusFilter" class="form-select">
-            <option value="">Todos os Status</option>
-            <option value="Pendente">Pendente</option>
-            <option value="Em Análise">Em Análise</option>
-            <option value="Resolvido">Resolvido</option>
-          </select>
-        </div>
-      </div>
-      <button class="btn btn-primary mb-4" onclick="applyFilters()">
-        Aplicar Filtros
-      </button>
       <div class="row" id="reports-container"></div>
       <canvas id="statusChart" class="mb-4"></canvas>
       <canvas id="salaChart" class="mb-4"></canvas>
@@ -152,20 +121,6 @@
           });
       }
 
-      function applyFilters() {
-        const salaFilter = document.getElementById("salaFilter").value;
-        const statusFilter = document.getElementById("statusFilter").value;
-        let query = db.collection("reports").orderBy("timestamp", "desc");
-
-        if (salaFilter) query = query.where("sala", "==", salaFilter);
-        if (statusFilter) query = query.where("status", "==", statusFilter);
-
-        query.get().then((querySnapshot) => {
-          displayReports(querySnapshot);
-          updateCharts(querySnapshot);
-        });
-      }
-
       function displayReports(querySnapshot) {
         const reportsContainer = document.getElementById("reports-container");
         reportsContainer.innerHTML = "";
@@ -174,14 +129,17 @@
           const report = doc.data();
           const reportCard = document.createElement("div");
           reportCard.classList.add("col-md-4", "card-3d");
+
           const date = report.timestamp.toDate();
           const formattedDate = date.toLocaleDateString("pt-BR");
+
           const statusClass =
             report.status === "Pendente"
               ? "status-pendente"
               : report.status === "Em Análise"
               ? "status-analise"
               : "status-resolvido";
+
           reportCard.innerHTML = `
           <div class="card-content">
             <div class="card-body">
@@ -191,11 +149,67 @@
               <p><strong>Tipo:</strong> ${report.bullyingType}</p>
               <p><strong>Status:</strong> <span class="${statusClass}">${report.status}</span></p>
               <p><strong>Data:</strong> ${formattedDate}</p>
+              <select class="form-select mb-3" onchange="updateStatus('${doc.id}', this.value)">
+                <option value="" disabled selected>Alterar Status</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Em Análise">Em Análise</option>
+                <option value="Resolvido">Resolvido</option>
+              </select>
+              <textarea id="response-${doc.id}" class="form-control mb-3" placeholder="Escreva uma resposta..."></textarea>
+              <button class="btn btn-primary" onclick="submitResponse('${doc.id}')">Enviar Resposta</button>
+              <button class="btn btn-delete mt-2" onclick="deleteReport('${doc.id}')">Excluir Denúncia</button>
             </div>
           </div>
         `;
           reportsContainer.appendChild(reportCard);
         });
+      }
+
+      function submitResponse(reportId) {
+        const responseText = document.getElementById(`response-${reportId}`).value;
+        if (responseText.trim() === "") {
+          alert("A resposta não pode estar vazia.");
+          return;
+        }
+
+        db.collection("reports")
+          .doc(reportId)
+          .update({ response: responseText })
+          .then(() => {
+            alert("Resposta enviada com sucesso!");
+            loadAllReports();
+          })
+          .catch((error) => {
+            console.error("Erro ao enviar resposta:", error);
+          });
+      }
+
+      function updateStatus(reportId, newStatus) {
+        db.collection("reports")
+          .doc(reportId)
+          .update({ status: newStatus })
+          .then(() => {
+            alert("Status atualizado com sucesso!");
+            loadAllReports();
+          })
+          .catch((error) => {
+            console.error("Erro ao atualizar status:", error);
+          });
+      }
+
+      function deleteReport(reportId) {
+        if (confirm("Tem certeza de que deseja excluir esta denúncia?")) {
+          db.collection("reports")
+            .doc(reportId)
+            .delete()
+            .then(() => {
+              alert("Denúncia excluída com sucesso!");
+              loadAllReports();
+            })
+            .catch((error) => {
+              console.error("Erro ao excluir denúncia:", error);
+            });
+        }
       }
 
       function updateCharts(querySnapshot) {
@@ -214,8 +228,7 @@
 
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          if (statusCounts[data.status] !== undefined)
-            statusCounts[data.status]++;
+          if (statusCounts[data.status] !== undefined) statusCounts[data.status]++;
           if (salaCounts[data.sala] !== undefined) salaCounts[data.sala]++;
         });
 
